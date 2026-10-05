@@ -1,929 +1,671 @@
 <!DOCTYPE html>
-<html lang="ru" class="h-full bg-slate-50">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Инвентаризация Офиса</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Font Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        navy: {
-                            800: '#1e293b',
-                            900: '#0f172a',
-                            950: '#020617'
-                        },
-                        brand: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-
-    <style>
-        /* Modern tap feedback and mobile optimizations */
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-        input, select, textarea {
-            user-select: text;
-        }
-        .touch-active:active {
-            transform: scale(0.98);
-            opacity: 0.9;
-        }
-        /* Hide scrollbars for clean chip slider */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        /* Input ring transition */
-        .input-field {
-            min-height: 48px;
-            transition: all 0.15s ease-in-out;
-        }
-        .input-field:focus-within {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-        }
-        /* Custom modal transition */
-        .modal-overlay {
-            backdrop-filter: blur(4px);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Инвентаризация Офисной Техники</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase Compat SDK for Zero-Config Realtime Sync -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <style>
+    body {
+      background-color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-touch { min-height: 48px; }
+    .input-touch { min-height: 48px; font-size: 16px; }
+  </style>
 </head>
-<body class="h-full text-slate-800 antialiased bg-slate-100 flex flex-col justify-between">
+<body class="text-slate-800 pb-20">
 
-    <div class="min-h-screen flex flex-col max-w-lg mx-auto bg-slate-50 shadow-xl border-x border-slate-200">
-        
-        <!-- Header -->
-        <header class="bg-navy-900 text-white pt-6 pb-5 px-4 sticky top-0 z-30 shadow-md">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center font-bold text-white shadow-inner">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-xs font-bold tracking-widest text-slate-400 uppercase">Система учетa</h1>
-                        <span class="text-lg font-extrabold tracking-tight text-white block -mt-0.5">ИНВЕНТАРИЗАЦИЯ</span>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-2">
-                    <button onclick="openBackupModal()" title="Резервное копирование и экспорт" class="p-2.5 rounded-xl bg-navy-800 hover:bg-slate-700 active:scale-95 text-slate-200 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
+  <!-- TOP SYNC HEADER -->
+  <div id="sync-bar" class="bg-slate-900 text-slate-200 px-4 py-2 text-xs flex justify-between items-center border-b border-slate-800">
+    <div class="flex items-center gap-2">
+      <span id="sync-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span id="sync-status-text" class="font-medium">Синхронизация с ПК активна</span>
+    </div>
+    <button onclick="openSyncModal()" class="text-slate-400 hover:text-white underline font-mono text-[11px]">
+      Комната: <span id="current-room-label">bcc-office</span> ⚙️
+    </button>
+  </div>
 
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-4 gap-2 text-center bg-navy-950/60 p-2.5 rounded-2xl border border-slate-800">
-                <div class="bg-navy-900/80 p-2 rounded-xl">
-                    <div id="statFloors" class="text-lg font-black text-brand-500">0</div>
-                    <div class="text-[10px] font-semibold uppercase text-slate-400 tracking-tight">Этажей</div>
-                </div>
-                <div class="bg-navy-900/80 p-2 rounded-xl">
-                    <div id="statRooms" class="text-lg font-black text-emerald-400">0</div>
-                    <div class="text-[10px] font-semibold uppercase text-slate-400 tracking-tight">Кабинетов</div>
-                </div>
-                <div class="bg-navy-900/80 p-2 rounded-xl">
-                    <div id="statEmployees" class="text-lg font-black text-amber-400">0</div>
-                    <div class="text-[10px] font-semibold uppercase text-slate-400 tracking-tight">Сотрудн.</div>
-                </div>
-                <div class="bg-navy-900/80 p-2 rounded-xl">
-                    <div id="statItems" class="text-lg font-black text-sky-400">0</div>
-                    <div class="text-[10px] font-semibold uppercase text-slate-400 tracking-tight">Техники</div>
-                </div>
-            </div>
-        </header>
+  <!-- HEADER -->
+  <header class="bg-slate-900 text-white pt-5 pb-6 px-4 shadow-md">
+    <div class="max-w-2xl mx-auto">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            <span>📋</span> ИНВЕНТАРИЗАЦИЯ
+          </h1>
+          <p class="text-xs text-slate-400 mt-0.5">Мобильный инструмент экспресс-учёта</p>
+        </div>
+        <button onclick="exportCSV()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition active:scale-95">
+          <span>📊</span> Экспорт Excel
+        </button>
+      </div>
 
-        <!-- Main Content Area -->
-        <main class="flex-1 p-4 space-y-4 pb-24">
-            
-            <!-- Primary Action Button -->
-            <button onclick="openFormModal()" class="w-full h-14 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-base rounded-2xl shadow-lg shadow-brand-600/30 flex items-center justify-center space-x-2 transition touch-active">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
-                </svg>
-                <span>ДОБАВИТЬ РАБОЧЕЕ МЕСТО</span>
+      <!-- STATS GRID -->
+      <div class="grid grid-cols-4 gap-2 bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 text-center">
+        <div class="bg-slate-900/50 p-1.5 rounded-lg">
+          <div id="stat-floors" class="text-lg font-extrabold text-blue-400">0</div>
+          <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Этажей</div>
+        </div>
+        <div class="bg-slate-900/50 p-1.5 rounded-lg">
+          <div id="stat-rooms" class="text-lg font-extrabold text-indigo-400">0</div>
+          <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Кабинетов</div>
+        </div>
+        <div class="bg-slate-900/50 p-1.5 rounded-lg">
+          <div id="stat-employees" class="text-lg font-extrabold text-emerald-400">0</div>
+          <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Сотрудников</div>
+        </div>
+        <div class="bg-slate-900/50 p-1.5 rounded-lg">
+          <div id="stat-tech" class="text-lg font-extrabold text-amber-400">0</div>
+          <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Техники</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-2xl mx-auto px-4 mt-4 space-y-4">
+
+    <!-- PRIMARY ACTION BUTTON -->
+    <div id="action-bar" class="block">
+      <button onclick="showForm()" class="w-full btn-touch bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 text-base active:scale-[0.99] transition">
+        <span class="text-xl">+</span> ДОБАВИТЬ РАБОЧЕЕ МЕСТО
+      </button>
+    </div>
+
+    <!-- FORM CARD -->
+    <div id="form-card" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+        <h2 id="form-title" class="font-bold text-slate-800 text-sm flex items-center gap-2">
+          <span>📍</span> Новое рабочее место
+        </h2>
+        <button onclick="hideForm()" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-2">✕</button>
+      </div>
+
+      <form id="inventory-form" onsubmit="handleSave(event)" class="p-4 space-y-4">
+        <input type="hidden" id="edit-id" value="">
+
+        <!-- LOCATION ROW -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Этаж *</label>
+            <input type="tel" inputmode="numeric" id="input-floor" required placeholder="Например: 3"
+              class="w-full input-touch px-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-semibold text-slate-900 bg-slate-50 focus:bg-white transition">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Кабинет *</label>
+            <input type="tel" inputmode="numeric" id="input-room" required placeholder="Например: 327"
+              class="w-full input-touch px-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-semibold text-slate-900 bg-slate-50 focus:bg-white transition">
+          </div>
+        </div>
+
+        <!-- EMPLOYEE -->
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">ФИО Сотрудника *</label>
+          <input type="text" id="input-employee" required placeholder="Абылкасым Жансерик" autocomplete="off"
+            class="w-full input-touch px-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-medium text-slate-900 bg-slate-50 focus:bg-white transition">
+        </div>
+
+        <!-- EQUIPMENT BLOCK -->
+        <div class="pt-2 border-t border-slate-100">
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-xs font-bold text-slate-600 uppercase tracking-wider">Техника на месте</label>
+            <button type="button" onclick="addTechRow()" class="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition">
+              + Добавить технику
             </button>
+          </div>
 
-            <!-- Search Field -->
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                </div>
-                <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Поиск по ФИО, инв. №, кабинету..." class="w-full pl-10 pr-10 py-3 bg-white border border-slate-300 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 shadow-sm text-slate-800 placeholder-slate-400">
-                <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Floor Quick Filter Chips -->
-            <div class="space-y-1.5">
-                <div class="flex items-center justify-between text-xs font-semibold text-slate-500 px-1">
-                    <span>Фильтр по этажам:</span>
-                    <span id="recordCountBadge" class="text-slate-400 font-normal">Показано: 0</span>
-                </div>
-                <div id="floorChipsContainer" class="flex space-x-2 overflow-x-auto no-scrollbar py-1">
-                    <!-- Dynamic Floor Chips generated via JS -->
-                </div>
-            </div>
-
-            <!-- Records Feed -->
-            <div id="recordsFeed" class="space-y-3">
-                <!-- Records injected here -->
-            </div>
-
-            <!-- Empty State -->
-            <div id="emptyState" class="hidden text-center py-12 px-4 bg-white rounded-2xl border border-dashed border-slate-300">
-                <div class="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400 mb-3">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                    </svg>
-                </div>
-                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Записей не найдено</h3>
-                <p class="text-xs text-slate-500 mt-1 max-w-xs mx-auto">Нажмите кнопку «Добавить рабочее место», чтобы зафиксировать первого сотрудника и его технику.</p>
-            </div>
-
-        </main>
-    </div>
-
-    <!-- MODAL 1: ADD / EDIT WORKPLACE FORM -->
-    <div id="formModal" class="fixed inset-0 z-50 hidden flex flex-col bg-slate-900/60 modal-overlay justify-end sm:justify-center p-0 sm:p-4">
-        <div class="bg-white w-full max-w-lg mx-auto rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden transform transition-all">
-            
-            <!-- Modal Header -->
-            <div class="bg-navy-900 px-5 py-4 text-white flex items-center justify-between shrink-0">
-                <div class="flex items-center space-x-2">
-                    <span id="modalFormIcon" class="p-1.5 bg-brand-600 rounded-lg">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                    </span>
-                    <h2 id="formModalTitle" class="text-base font-bold tracking-tight">Новое рабочее место</h2>
-                </div>
-                <button onclick="closeFormModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Form Content -->
-            <div class="p-5 overflow-y-auto space-y-4 flex-1 bg-slate-50">
-                
-                <!-- Floor & Room Grid -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Этаж <span class="text-red-500">*</span></label>
-                        <div class="input-field bg-white border border-slate-300 rounded-xl flex items-center px-3">
-                            <input type="number" id="inputFloor" placeholder="3" min="-2" max="100" class="w-full bg-transparent text-slate-800 font-bold text-base focus:outline-none" required>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Кабинет <span class="text-red-500">*</span></label>
-                        <div class="input-field bg-white border border-slate-300 rounded-xl flex items-center px-3">
-                            <input type="text" id="inputRoom" placeholder="327" class="w-full bg-transparent text-slate-800 font-bold text-base focus:outline-none" required>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sticky Location Lock Checkbox -->
-                <div class="bg-brand-50 border border-brand-100 rounded-xl p-3 flex items-center space-x-3">
-                    <input type="checkbox" id="lockRoomToggle" class="w-5 h-5 text-brand-600 rounded border-slate-300 focus:ring-brand-500" checked>
-                    <label for="lockRoomToggle" class="text-xs font-semibold text-brand-900 leading-tight cursor-pointer">
-                        Зафиксировать Этаж и Кабинет для следующего сотрудника
-                    </label>
-                </div>
-
-                <!-- Employee Name -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">ФИО Сотрудника <span class="text-red-500">*</span></label>
-                    <div class="input-field bg-white border border-slate-300 rounded-xl flex items-center px-3">
-                        <input type="text" id="inputEmployee" autocapitalize="words" placeholder="Абылкасым Жансерик" class="w-full bg-transparent text-slate-800 font-semibold text-base focus:outline-none" required>
-                    </div>
-                </div>
-
-                <!-- Equipment Section -->
-                <div class="space-y-2 pt-2 border-t border-slate-200">
-                    <div class="flex items-center justify-between">
-                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Закрепленная Техника</label>
-                        <span class="text-xs text-slate-500 font-medium" id="equipmentCounter">2 предметов</span>
-                    </div>
-
-                    <!-- Equipment Items List -->
-                    <div id="equipmentItemsList" class="space-y-2.5">
-                        <!-- Dynamic Equipment Rows Injected -->
-                    </div>
-
-                    <!-- Add Equipment Button -->
-                    <button type="button" onclick="addEquipmentRow()" class="w-full py-3 border-2 border-dashed border-brand-500/40 text-brand-700 bg-brand-50/50 hover:bg-brand-100/60 active:scale-[0.99] rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        <span>Добавить технику</span>
-                    </button>
-                </div>
-
-            </div>
-
-            <!-- Modal Footer Buttons -->
-            <div class="p-4 bg-white border-t border-slate-200 space-y-2 shrink-0">
-                <button type="button" id="btnSaveAndNext" onclick="saveWorkplace(true)" class="w-full h-13 py-3.5 bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-black text-sm uppercase tracking-wider rounded-xl shadow-lg shadow-brand-600/30 flex items-center justify-center space-x-2 transition">
-                    <span>СОХРАНИТЬ (И ДАЛЕЕ)</span>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                    </svg>
-                </button>
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <button type="button" onclick="saveWorkplace(false)" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase rounded-xl transition">
-                        Сохранить и закрыть
-                    </button>
-                    <button type="button" onclick="closeFormModal()" class="w-full py-2.5 border border-slate-300 text-slate-500 font-bold text-xs uppercase rounded-xl hover:bg-slate-50 transition">
-                        Отмена
-                    </button>
-                </div>
-            </div>
-
+          <div id="tech-list" class="space-y-2.5">
+            <!-- Dynamic rows inserted here -->
+          </div>
         </div>
-    </div>
 
-    <!-- MODAL 2: EXPORT & BACKUP -->
-    <div id="backupModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 modal-overlay p-4">
-        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col">
-            
-            <div class="bg-navy-900 px-5 py-4 text-white flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
-                    </svg>
-                    <h3 class="text-base font-bold">Экспорт и Данные</h3>
-                </div>
-                <button onclick="closeBackupModal()" class="text-slate-400 hover:text-white">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="p-5 space-y-4 text-sm bg-slate-50">
-                <!-- CSV Export -->
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
-                    <div class="font-bold text-slate-800 flex items-center space-x-2">
-                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <span>Экспорт в Excel / CSV</span>
-                    </div>
-                    <p class="text-xs text-slate-500">Выгрузка всех записей в формат .csv с кодировкой UTF-8 для открытия в Excel без искажения символов.</p>
-                    <button onclick="exportToCSV()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow">
-                        Скачать Таблицу CSV
-                    </button>
-                </div>
-
-                <!-- Backup JSON -->
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
-                    <div class="font-bold text-slate-800 flex items-center space-x-2">
-                        <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                        </svg>
-                        <span>Резервная копия (JSON)</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="exportToJSON()" class="py-2.5 border border-brand-600 text-brand-700 hover:bg-brand-50 font-bold text-xs uppercase rounded-xl transition">
-                            Экспорт (JSON)
-                        </button>
-                        <label class="py-2.5 border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs uppercase rounded-xl transition cursor-pointer text-center block">
-                            Импорт (JSON)
-                            <input type="file" id="importFileInput" accept=".json" onchange="importFromJSON(event)" class="hidden">
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Danger Zone -->
-                <div class="pt-2">
-                    <button onclick="confirmResetData()" class="w-full py-2.5 border border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs uppercase rounded-xl transition">
-                        Сбросить всё к демо-данным
-                    </button>
-                </div>
-            </div>
-
+        <!-- SAVE BUTTONS -->
+        <div class="pt-2 space-y-2">
+          <button type="submit" class="w-full btn-touch bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md shadow-emerald-600/20 text-base active:scale-[0.99] transition flex items-center justify-center gap-2">
+            <span>💾</span> <span id="save-btn-text">СОХРАНИТЬ (И ДАЛЕЕ)</span>
+          </button>
+          <button type="button" onclick="hideForm()" class="w-full py-2.5 text-xs text-slate-500 font-semibold hover:text-slate-800 text-center">
+            Отмена
+          </button>
         </div>
+      </form>
     </div>
 
-    <!-- Floating Toast Notification -->
-    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4">
-        <div id="toastContent" class="bg-navy-900 text-white px-5 py-3 rounded-2xl shadow-2xl font-bold text-sm flex items-center space-x-2.5 border border-slate-700">
-            <svg id="toastIcon" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <span id="toastMessage">Запись сохранена!</span>
+    <!-- SEARCH & FILTERS -->
+    <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 space-y-3">
+      <!-- Search Input -->
+      <div class="relative">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">🔍</span>
+        <input type="text" id="search-input" oninput="renderList()" placeholder="Поиск по ФИО, инв. номеру, кабинету..."
+          class="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition">
+        <button onclick="clearSearch()" id="clear-search-btn" class="hidden absolute inset-y-0 right-0 pr-3 text-slate-400 text-sm font-bold">✕</button>
+      </div>
+
+      <!-- Floor Filter Chips -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs" id="floor-filters">
+        <!-- Generated dynamically -->
+      </div>
+    </div>
+
+    <!-- HISTORY / LIST -->
+    <div class="space-y-3">
+      <div class="flex justify-between items-center px-1">
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Сохранённые записи (<span id="records-count">0</span>)</h3>
+        <div class="flex gap-2 text-[11px]">
+          <button onclick="exportJSON()" class="text-slate-500 hover:text-blue-600">Экспорт бэкапа</button>
+          <span class="text-slate-300">|</span>
+          <button onclick="document.getElementById('import-file').click()" class="text-slate-500 hover:text-blue-600">Импорт</button>
+          <input type="file" id="import-file" class="hidden" accept=".json" onchange="importJSON(event)">
         </div>
+      </div>
+
+      <div id="records-list" class="space-y-3">
+        <!-- Records inserted dynamically -->
+      </div>
     </div>
+  </main>
 
-    <script>
-        // Preset preset type suggestions
-        const SUGGESTED_EQUIPMENT_TYPES = [
-            'ПК', 'Монитор', 'Ноутбук', 'Телефон', 'Принтер', 
-            'Клавиатура', 'Мышь', 'Гарнитура', 'Док-станция', 'ИБП', 'Другое'
-        ];
+  <!-- SYNC SETTINGS MODAL -->
+  <div id="sync-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <span>🔄</span> Синхронизация ПК и Телефона
+        </h3>
+        <button onclick="closeSyncModal()" class="text-slate-400 font-bold text-lg">✕</button>
+      </div>
 
-        // Sample Data initialized if empty
-        const DEMO_RECORDS = [
-            {
-                id: 'rec-101',
-                floor: '3',
-                room: '327',
-                employee: 'Абылкасым Жансерик',
-                equipment: [
-                    { type: 'ПК', code: '000000123456' },
-                    { type: 'Монитор', code: '000000123457' },
-                    { type: 'Телефон', code: '000000123458' }
-                ],
-                updatedAt: Date.now() - 3600000
-            },
-            {
-                id: 'rec-102',
-                floor: '3',
-                room: '327',
-                employee: 'Сайдалин Асанали',
-                equipment: [
-                    { type: 'ПК', code: '000000123459' },
-                    { type: 'Монитор', code: '000000123460' }
-                ],
-                updatedAt: Date.now() - 1800000
-            }
-        ];
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Введите одинаковый **Код комнаты** на телефоне и на ПК. Все вносимые данные будут мгновенно появляться на обоих устройствах без перезагрузки!
+      </p>
 
-        // Global State
-        let records = [];
-        let editingRecordId = null;
-        let selectedFloorFilter = 'ALL';
-        let searchQuery = '';
+      <div>
+        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Код комнаты</label>
+        <input type="text" id="room-code-input" placeholder="например: bcc-office"
+          class="w-full input-touch px-3 rounded-xl border border-slate-300 font-mono font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
 
-        // Initialize App
-        window.addEventListener('DOMContentLoaded', () => {
-            loadRecords();
-            renderApp();
+      <button onclick="applyRoomCode()" class="w-full btn-touch bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md text-sm">
+        Подключиться к комнате
+      </button>
+    </div>
+  </div>
+
+  <!-- JS LOGIC -->
+  <script>
+    // TECH TYPES
+    const TECH_TYPES = ["ПК", "Монитор", "Ноутбук", "Телефон", "Принтер", "Клавиатура", "Мышь", "Гарнитура", "Док-станция", "ИБП", "Другое"];
+
+    // STATE
+    let records = [];
+    let currentFilter = 'all';
+    let availableFloors = ['2', '3', '4', '5'];
+    let roomCode = localStorage.getItem('inventory_room_code') || 'bcc-office';
+
+    // FIREBASE INITIALIZATION
+    const firebaseConfig = {
+      databaseURL: "https://inventory-bcc-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+    let dbRef = null;
+
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      initFirebaseSync();
+    } catch (e) {
+      console.warn("Cloud sync initialized in local fallback mode", e);
+      updateSyncStatus(false, "Локальный режим");
+    }
+
+    function initFirebaseSync() {
+      document.getElementById('current-room-label').textContent = roomCode;
+      dbRef = firebase.database().ref('inventories/' + roomCode);
+
+      updateSyncStatus(true, "Синхронизация с ПК активна");
+
+      dbRef.on('value', (snapshot) => {
+        const val = snapshot.val();
+        if (val && Array.isArray(val)) {
+          records = val;
+          localStorage.setItem('office_inventory_data', JSON.stringify(records));
+          updateStatsAndFilters();
+          renderList();
+        } else if (!val && records.length > 0) {
+          // Push initial local data to cloud if cloud is empty
+          dbRef.set(records);
+        }
+      }, (err) => {
+        console.error("Sync error:", err);
+        updateSyncStatus(false, "Ошибка облака (сохранение локально)");
+      });
+    }
+
+    function updateSyncStatus(online, text) {
+      const dot = document.getElementById('sync-dot');
+      const statusText = document.getElementById('sync-status-text');
+      statusText.textContent = text;
+      if (online) {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+      } else {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem('office_inventory_data', JSON.stringify(records));
+      if (dbRef) {
+        dbRef.set(records).catch(err => console.error("Cloud write failed:", err));
+      }
+      updateStatsAndFilters();
+      renderList();
+    }
+
+    // INIT ON LOAD
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('office_inventory_data');
+      if (saved) {
+        try { records = JSON.parse(saved); } catch (e) {}
+      }
+      updateStatsAndFilters();
+      renderList();
+    });
+
+    // FLOOR MATCHING LOGIC (FIXED)
+    function matchFloor(itemFloor, filterValue) {
+      if (!filterValue || filterValue === 'all' || filterValue === 'Все') return true;
+
+      const cleanItem = String(itemFloor || '').replace(/\D/g, '');
+      const cleanFilter = String(filterValue || '').replace(/\D/g, '');
+
+      if (cleanItem && cleanFilter) {
+        return cleanItem === cleanFilter;
+      }
+      return String(itemFloor || '').trim().toLowerCase() === String(filterValue || '').trim().toLowerCase();
+    }
+
+    // FORM VISIBILITY
+    function showForm(editRecord = null) {
+      const card = document.getElementById('form-card');
+      const actionBar = document.getElementById('action-bar');
+      const form = document.getElementById('inventory-form');
+      const techContainer = document.getElementById('tech-list');
+
+      card.classList.remove('hidden');
+      actionBar.classList.add('hidden');
+      techContainer.innerHTML = '';
+
+      if (editRecord) {
+        document.getElementById('form-title').innerHTML = '<span>✏️</span> Редактирование записи';
+        document.getElementById('edit-id').value = editRecord.id;
+        document.getElementById('input-floor').value = editRecord.floor;
+        document.getElementById('input-room').value = editRecord.room;
+        document.getElementById('input-employee').value = editRecord.employee;
+        document.getElementById('save-btn-text').textContent = 'СОХРАНИТЬ ИЗМЕНЕНИЯ';
+
+        editRecord.tech.forEach(t => addTechRow(t.type, t.inv));
+      } else {
+        document.getElementById('form-title').innerHTML = '<span>📍</span> Новое рабочее место';
+        document.getElementById('edit-id').value = '';
+        document.getElementById('input-employee').value = '';
+        document.getElementById('save-btn-text').textContent = 'СОХРАНИТЬ (И ДАЛЕЕ)';
+
+        // Auto-fill last floor/room if available
+        if (records.length > 0 && !document.getElementById('input-floor').value) {
+          const last = records[0];
+          document.getElementById('input-floor').value = last.floor;
+          document.getElementById('input-room').value = last.room;
+        }
+
+        // Default 2 rows
+        addTechRow("ПК", "");
+        addTechRow("Монитор", "");
+
+        // Focus employee field for quick walkthrough
+        setTimeout(() => document.getElementById('input-employee').focus(), 150);
+      }
+
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function hideForm() {
+      document.getElementById('form-card').classList.add('hidden');
+      document.getElementById('action-bar').classList.remove('hidden');
+    }
+
+    // TECH ROWS
+    function addTechRow(defaultType = "ПК", defaultInv = "") {
+      const container = document.getElementById('tech-list');
+      const rowId = 'tech-row-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+
+      const div = document.createElement('div');
+      div.id = rowId;
+      div.className = "bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-2 relative";
+
+      div.innerHTML = `
+        <div class="flex items-center gap-2">
+          <div class="flex-1">
+            <select onchange="handleTypeChange('${rowId}', this.value)" class="w-full py-2 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+              ${TECH_TYPES.map(t => `<option value="${t}" ${t === defaultType ? 'selected' : ''}>${t}</option>`).join('')}
+            </select>
+          </div>
+          <button type="button" onclick="removeTechRow('${rowId}')" class="text-slate-400 hover:text-red-500 p-1 font-bold text-base">✕</button>
+        </div>
+        <input type="text" id="custom-type-${rowId}" placeholder="Укажите тип техники..." value="${defaultType}" 
+          class="${TECH_TYPES.includes(defaultType) && defaultType !== 'Другое' ? 'hidden' : ''} w-full py-1.5 px-2.5 bg-white border border-slate-300 rounded-lg text-xs outline-none">
+        <div>
+          <input type="tel" inputmode="numeric" placeholder="Инвентарный номер" value="${defaultInv}" required
+            class="tech-inv-input w-full py-2 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-mono font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      `;
+
+      container.appendChild(div);
+    }
+
+    function handleTypeChange(rowId, val) {
+      const customInput = document.getElementById(`custom-type-${rowId}`);
+      if (val === 'Другое') {
+        customInput.classList.remove('hidden');
+        customInput.value = '';
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+        customInput.value = val;
+      }
+    }
+
+    function removeTechRow(rowId) {
+      const row = document.getElementById(rowId);
+      if (row) row.remove();
+    }
+
+    // SAVE HANDLER
+    function handleSave(e) {
+      e.preventDefault();
+
+      const editId = document.getElementById('edit-id').value;
+      const floor = document.getElementById('input-floor').value.trim();
+      const room = document.getElementById('input-room').value.trim();
+      const employee = document.getElementById('input-employee').value.trim();
+
+      const techRows = document.querySelectorAll('#tech-list > div');
+      const techData = [];
+
+      techRows.forEach(row => {
+        const selectVal = row.querySelector('select').value;
+        const customInput = row.querySelector('input[id^="custom-type-"]');
+        const invInput = row.querySelector('.tech-inv-input');
+
+        let finalType = selectVal;
+        if (selectVal === 'Другое' || customInput.classList.contains('hidden') === false) {
+          finalType = customInput.value.trim() || 'Техника';
+        }
+
+        const invVal = invInput ? invInput.value.trim() : '';
+        if (invVal) {
+          techData.push({ type: finalType, inv: invVal });
+        }
+      });
+
+      if (techData.length === 0) {
+        alert("Пожалуйста, укажите хотя бы одну единицу техники с инвентарным номером.");
+        return;
+      }
+
+      if (editId) {
+        // Edit Existing
+        const idx = records.findIndex(r => r.id === editId);
+        if (idx !== -1) {
+          records[idx] = { id: editId, floor, room, employee, tech: techData, timestamp: Date.now() };
+        }
+        hideForm();
+      } else {
+        // Add New
+        const newRecord = {
+          id: 'rec-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+          floor,
+          room,
+          employee,
+          tech: techData,
+          timestamp: Date.now()
+        };
+        records.unshift(newRecord);
+
+        // Reset form for continuous floor walkthrough
+        document.getElementById('input-employee').value = '';
+        document.getElementById('tech-list').innerHTML = '';
+        addTechRow("ПК", "");
+        addTechRow("Монитор", "");
+
+        setTimeout(() => document.getElementById('input-employee').focus(), 100);
+      }
+
+      saveState();
+    }
+
+    // RENDER LIST
+    function renderList() {
+      const container = document.getElementById('records-list');
+      const searchQuery = document.getElementById('search-input').value.trim().toLowerCase();
+      document.getElementById('clear-search-btn').classList.toggle('hidden', !searchQuery);
+
+      const filtered = records.filter(item => {
+        // Floor filter check (normalized)
+        const matchesFloorFilter = matchFloor(item.floor, currentFilter);
+
+        // Search query check
+        let matchesSearch = true;
+        if (searchQuery) {
+          const q = searchQuery;
+          const matchEmp = item.employee.toLowerCase().includes(q);
+          const matchRoom = String(item.room).toLowerCase().includes(q);
+          const matchFloorNum = String(item.floor).toLowerCase().includes(q);
+          const matchTech = item.tech.some(t => t.type.toLowerCase().includes(q) || String(t.inv).toLowerCase().includes(q));
+
+          matchesSearch = matchEmp || matchRoom || matchFloorNum || matchTech;
+        }
+
+        return matchesFloorFilter && matchesSearch;
+      });
+
+      document.getElementById('records-count').textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl p-8 text-center border border-slate-200">
+            <div class="text-3xl mb-2">🔍</div>
+            <div class="font-bold text-slate-700 text-sm">Записей не найдено</div>
+            <div class="text-xs text-slate-400 mt-1">Попробуйте изменить фильтр или добавить новое рабочее место.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => `
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:border-blue-300 transition space-y-3">
+          <div class="flex justify-between items-start border-b border-slate-100 pb-2.5">
+            <div>
+              <div class="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                Кабинет ${item.room} · ${item.floor} этаж
+              </div>
+              <div class="text-base font-bold text-slate-900 mt-0.5">${item.employee}</div>
+            </div>
+            <div class="flex gap-1">
+              <button onclick="editRecord('${item.id}')" class="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 rounded-lg transition">
+                Изменить
+              </button>
+              <button onclick="deleteRecord('${item.id}')" class="px-2.5 py-1 text-xs font-semibold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition">
+                Удалить
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            ${item.tech.map(t => `
+              <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 flex justify-between items-center">
+                <span class="font-medium text-slate-700">${t.type}</span>
+                <span class="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">${t.inv}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // STATS & FILTER CHIPS
+    function updateStatsAndFilters() {
+      const uniqueFloors = new Set(records.map(r => String(r.floor).trim()));
+      const uniqueRooms = new Set(records.map(r => `${r.floor}-${r.room}`));
+      const totalEmployees = records.length;
+      const totalTech = records.reduce((acc, r) => acc + r.tech.length, 0);
+
+      document.getElementById('stat-floors').textContent = uniqueFloors.size;
+      document.getElementById('stat-rooms').textContent = uniqueRooms.size;
+      document.getElementById('stat-employees').textContent = totalEmployees;
+      document.getElementById('stat-tech').textContent = totalTech;
+
+      // Update available floors list
+      uniqueFloors.forEach(f => {
+        const clean = f.replace(/\D/g, '') || f;
+        if (clean && !availableFloors.includes(clean)) availableFloors.push(clean);
+      });
+      availableFloors.sort((a, b) => parseInt(a) - parseInt(b));
+
+      // Render Floor Filter Buttons
+      const filterContainer = document.getElementById('floor-filters');
+      filterContainer.innerHTML = `
+        <button onclick="setFilter('all')" class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition ${currentFilter === 'all' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+          Все
+        </button>
+        ${availableFloors.map(f => `
+          <button onclick="setFilter('${f}')" class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition ${matchFloor(f, currentFilter) && currentFilter !== 'all' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+            ${f} этаж
+          </button>
+        `).join('')}
+        <button onclick="promptAddFloor()" class="px-2.5 py-1.5 rounded-xl font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 whitespace-nowrap transition">
+          + Этаж
+        </button>
+      `;
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      updateStatsAndFilters();
+      renderList();
+    }
+
+    function promptAddFloor() {
+      const f = prompt("Введите номер нового этажа:");
+      if (f && f.trim()) {
+        const clean = f.trim();
+        if (!availableFloors.includes(clean)) availableFloors.push(clean);
+        setFilter(clean);
+      }
+    }
+
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      renderList();
+    }
+
+    // EDIT & DELETE
+    function editRecord(id) {
+      const rec = records.find(r => r.id === id);
+      if (rec) showForm(rec);
+    }
+
+    function deleteRecord(id) {
+      if (confirm("Вы действительно хотите удалить эту запись?")) {
+        records = records.filter(r => r.id !== id);
+        saveState();
+      }
+    }
+
+    // EXPORT EXCEL / CSV
+    function exportCSV() {
+      if (records.length === 0) {
+        alert("Нет данных для экспорта.");
+        return;
+      }
+
+      let csv = "\uFEFF"; // UTF-8 BOM
+      csv += "Этаж;Кабинет;Сотрудник;Тип техники;Инвентарный номер\n";
+
+      records.forEach(r => {
+        r.tech.forEach(t => {
+          csv += `"${r.floor}";"${r.room}";"${r.employee}";"${t.type}";"${t.inv}"\n`;
         });
+      });
 
-        function loadRecords() {
-            const stored = localStorage.getItem('office_inventory_records');
-            if (stored) {
-                try {
-                    records = JSON.parse(stored);
-                } catch (e) {
-                    console.error("Failed to parse storage, restoring demo data", e);
-                    records = [...DEMO_RECORDS];
-                }
-            } else {
-                records = [...DEMO_RECORDS];
-                saveToStorage();
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Инвентаризация_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // BACKUP JSON
+    function exportJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(records, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `inventory_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const imported = JSON.parse(evt.target.result);
+          if (Array.isArray(imported)) {
+            if (confirm(`Импортировать ${imported.length} записей? Текущие данные будут объединены.`)) {
+              records = [...imported, ...records];
+              saveState();
+              alert("Импорт успешно завершен!");
             }
+          }
+        } catch (err) {
+          alert("Ошибка при чтении файла бэкапа.");
         }
-
-        function saveToStorage() {
-            localStorage.setItem('office_inventory_records', JSON.stringify(records));
-        }
-
-        function renderApp() {
-            updateStats();
-            renderFloorChips();
-            renderRecordsFeed();
-        }
-
-        function updateStats() {
-            const uniqueFloors = new Set(records.map(r => String(r.floor).trim()).filter(Boolean));
-            const uniqueRooms = new Set(records.map(r => `${r.floor}-${r.room}`).filter(Boolean));
-            const totalEmployees = records.length;
-            const totalEquipment = records.reduce((acc, r) => acc + (r.equipment ? r.equipment.length : 0), 0);
-
-            document.getElementById('statFloors').textContent = uniqueFloors.size;
-            document.getElementById('statRooms').textContent = uniqueRooms.size;
-            document.getElementById('statEmployees').textContent = totalEmployees;
-            document.getElementById('statItems').textContent = totalEquipment;
-        }
-
-        function renderFloorChips() {
-            const container = document.getElementById('floorChipsContainer');
-            
-            // Extract unique floor numbers & sort logically
-            const floorSet = new Set(records.map(r => String(r.floor).trim()).filter(Boolean));
-            const sortedFloors = Array.from(floorSet).sort((a, b) => {
-                const numA = parseInt(a, 10);
-                const numB = parseInt(b, 10);
-                if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-                return a.localeCompare(b);
-            });
-
-            // Standard floors plus dynamic ones
-            const defaultFloors = ['1', '2', '3', '4', '5'];
-            const allFloors = Array.from(new Set([...defaultFloors, ...sortedFloors]));
-
-            let html = `
-                <button onclick="setFloorFilter('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${selectedFloorFilter === 'ALL' ? 'bg-navy-900 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}">
-                    Все этажи
-                </button>
-            `;
-
-            allFloors.forEach(floor => {
-                const isActive = selectedFloorFilter === floor;
-                html += `
-                    <button onclick="setFloorFilter('${floor}')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${isActive ? 'bg-navy-900 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}">
-                        ${floor} этаж
-                    </button>
-                `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function setFloorFilter(floor) {
-            selectedFloorFilter = floor;
-            renderFloorChips();
-            renderRecordsFeed();
-        }
-
-        function handleSearch() {
-            const val = document.getElementById('searchInput').value.trim();
-            searchQuery = val.toLowerCase();
-            document.getElementById('clearSearchBtn').classList.toggle('hidden', val === '');
-            renderRecordsFeed();
-        }
-
-        function clearSearch() {
-            document.getElementById('searchInput').value = '';
-            searchQuery = '';
-            document.getElementById('clearSearchBtn').classList.add('hidden');
-            renderRecordsFeed();
-        }
-
-        function renderRecordsFeed() {
-            const feed = document.getElementById('recordsFeed');
-            const emptyState = document.getElementById('emptyState');
-            
-            // Filter logic
-            const filtered = records.filter(record => {
-                // Floor filter
-                if (selectedFloorFilter !== 'ALL' && String(record.floor).trim() !== String(selectedFloorFilter).trim()) {
-                    return false;
-                }
-
-                // Search query matching
-                if (searchQuery) {
-                    const matchEmployee = record.employee.toLowerCase().includes(searchQuery);
-                    const matchRoom = String(record.room).toLowerCase().includes(searchQuery);
-                    const matchFloor = String(record.floor).toLowerCase().includes(searchQuery);
-                    const matchEquipment = record.equipment.some(eq => 
-                        eq.type.toLowerCase().includes(searchQuery) || 
-                        eq.code.toLowerCase().includes(searchQuery)
-                    );
-                    return matchEmployee || matchRoom || matchFloor || matchEquipment;
-                }
-
-                return true;
-            });
-
-            document.getElementById('recordCountBadge').textContent = `Показано: ${filtered.length}`;
-
-            if (filtered.length === 0) {
-                feed.innerHTML = '';
-                emptyState.classList.remove('hidden');
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-
-            feed.innerHTML = filtered.map(record => {
-                const equipmentRows = record.equipment.map(eq => `
-                    <div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
-                        <span class="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60">${escapeHtml(eq.type)}</span>
-                        <span class="font-mono text-slate-900 font-semibold tracking-wider bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                            ${highlightMatch(escapeHtml(eq.code), searchQuery)}
-                        </span>
-                    </div>
-                `).join('');
-
-                return `
-                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition space-y-3">
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <div class="text-[11px] font-black uppercase tracking-wider text-brand-600 bg-brand-50 inline-block px-2 py-0.5 rounded-md border border-brand-100">
-                                    Кабинет ${escapeHtml(record.room)} · ${escapeHtml(record.floor)} этаж
-                                </div>
-                                <h3 class="text-base font-extrabold text-slate-900 mt-1">
-                                    ${highlightMatch(escapeHtml(record.employee), searchQuery)}
-                                </h3>
-                            </div>
-                            
-                            <div class="flex items-center space-x-1">
-                                <button onclick="editRecord('${record.id}')" title="Изменить" class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                    </svg>
-                                </button>
-                                <button onclick="deleteRecord('${record.id}')" title="Удалить" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Equipment list inside card -->
-                        <div class="bg-slate-50/70 p-2.5 rounded-xl border border-slate-200/80 space-y-0.5">
-                            ${equipmentRows}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderEquipmentInputs(items) {
-            const container = document.getElementById('equipmentItemsList');
-            container.innerHTML = '';
-
-            items.forEach((item, index) => {
-                const row = document.createElement('div');
-                row.className = "bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2 relative";
-                
-                // Chips for quick selection
-                const chipsHtml = SUGGESTED_EQUIPMENT_TYPES.map(t => `
-                    <button type="button" onclick="selectEquipmentType(${index}, '${t}')" class="px-2 py-0.5 text-[10px] font-bold rounded-md transition ${item.type === t ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
-                        ${t}
-                    </button>
-                `).join('');
-
-                row.innerHTML = `
-                    <div class="flex items-center justify-between gap-2">
-                        <input type="text" value="${escapeHtml(item.type)}" onchange="updateEquipmentItem(${index}, 'type', this.value)" placeholder="Тип техники" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-500">
-                        
-                        <button type="button" onclick="removeEquipmentRow(${index})" class="p-1 text-slate-400 hover:text-red-500 rounded transition" title="Удалить строку">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Quick Type Suggestions Chips -->
-                    <div class="flex flex-wrap gap-1 py-0.5">
-                        ${chipsHtml}
-                    </div>
-
-                    <!-- Inventory Number Field with Numeric Keypad -->
-                    <div>
-                        <input type="tel" inputmode="numeric" value="${escapeHtml(item.code)}" oninput="updateEquipmentItem(${index}, 'code', this.value)" placeholder="Инвентарный номер (напр. 000000123456)" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
-                    </div>
-                `;
-
-                container.appendChild(row);
-            });
-
-            document.getElementById('equipmentCounter').textContent = `${items.length} ед.`;
-        }
-
-        // Temporary equipment state inside form
-        let currentFormEquipment = [];
-
-        function addEquipmentRow(type = 'Другое', code = '') {
-            currentFormEquipment.push({ type, code });
-            renderEquipmentInputs(currentFormEquipment);
-        }
-
-        function removeEquipmentRow(index) {
-            if (currentFormEquipment.length <= 1) {
-                showToast("Должен остаться хотя бы 1 предмет техники", "error");
-                return;
-            }
-            currentFormEquipment.splice(index, 1);
-            renderEquipmentInputs(currentFormEquipment);
-        }
-
-        function updateEquipmentItem(index, field, value) {
-            if (currentFormEquipment[index]) {
-                currentFormEquipment[index][field] = value;
-            }
-        }
-
-        function selectEquipmentType(index, type) {
-            if (currentFormEquipment[index]) {
-                currentFormEquipment[index].type = type;
-                renderEquipmentInputs(currentFormEquipment);
-            }
-        }
-
-        function openFormModal(recordToEdit = null) {
-            editingRecordId = recordToEdit ? recordToEdit.id : null;
-            const modal = document.getElementById('formModal');
-            const title = document.getElementById('formModalTitle');
-            const btnSaveAndNext = document.getElementById('btnSaveAndNext');
-
-            if (recordToEdit) {
-                title.textContent = 'Редактировать запись';
-                document.getElementById('inputFloor').value = recordToEdit.floor;
-                document.getElementById('inputRoom').value = recordToEdit.room;
-                document.getElementById('inputEmployee').value = recordToEdit.employee;
-                currentFormEquipment = JSON.parse(JSON.stringify(recordToEdit.equipment));
-                btnSaveAndNext.classList.add('hidden'); // Hide "Save & Next" during editing mode
-            } else {
-                title.textContent = 'Новое рабочее место';
-                
-                // Keep pinned floor & room if checkbox was locked from previous entry
-                const lockToggle = document.getElementById('lockRoomToggle');
-                const lastFloor = localStorage.getItem('office_inv_last_floor') || '3';
-                const lastRoom = localStorage.getItem('office_inv_last_room') || '327';
-
-                if (!lockToggle.checked) {
-                    document.getElementById('inputFloor').value = '';
-                    document.getElementById('inputRoom').value = '';
-                } else {
-                    document.getElementById('inputFloor').value = lastFloor;
-                    document.getElementById('inputRoom').value = lastRoom;
-                }
-
-                document.getElementById('inputEmployee').value = '';
-                
-                // Default two equipment rows as specified
-                currentFormEquipment = [
-                    { type: 'ПК', code: '' },
-                    { type: 'Монитор', code: '' }
-                ];
-
-                btnSaveAndNext.classList.remove('hidden');
-            }
-
-            renderEquipmentInputs(currentFormEquipment);
-            modal.classList.remove('hidden');
-
-            // Auto focus on employee input if floor/room are set
-            setTimeout(() => {
-                const empInput = document.getElementById('inputEmployee');
-                if (empInput) empInput.focus();
-            }, 100);
-        }
-
-        function closeFormModal() {
-            document.getElementById('formModal').classList.add('hidden');
-            editingRecordId = null;
-        }
-
-        function saveWorkplace(isContinuous = false) {
-            const floorInput = document.getElementById('inputFloor').value.trim();
-            const roomInput = document.getElementById('inputRoom').value.trim();
-            const employeeInput = document.getElementById('inputEmployee').value.trim();
-
-            if (!floorInput || !roomInput) {
-                showToast("Укажите этаж и кабинет!", "error");
-                return;
-            }
-
-            if (!employeeInput) {
-                showToast("Укажите ФИО сотрудника!", "error");
-                document.getElementById('inputEmployee').focus();
-                return;
-            }
-
-            // Save pinned location state
-            localStorage.setItem('office_inv_last_floor', floorInput);
-            localStorage.setItem('office_inv_last_room', roomInput);
-
-            const recordData = {
-                id: editingRecordId || ('rec-' + Date.now() + '-' + Math.floor(Math.random() * 1000)),
-                floor: floorInput,
-                room: roomInput,
-                employee: employeeInput,
-                equipment: currentFormEquipment.map(eq => ({
-                    type: eq.type.trim() || 'Техника',
-                    code: eq.code.trim() || '—'
-                })),
-                updatedAt: Date.now()
-            };
-
-            if (editingRecordId) {
-                const idx = records.findIndex(r => r.id === editingRecordId);
-                if (idx !== -1) records[idx] = recordData;
-                showToast("Запись обновлена!");
-            } else {
-                records.unshift(recordData); // Add to top
-                showToast("Запись сохранена!");
-            }
-
-            saveToStorage();
-            renderApp();
-
-            if (isContinuous && !editingRecordId) {
-                // Prepare form instantly for next employee in same room
-                document.getElementById('inputEmployee').value = '';
-                currentFormEquipment = [
-                    { type: 'ПК', code: '' },
-                    { type: 'Монитор', code: '' }
-                ];
-                renderEquipmentInputs(currentFormEquipment);
-
-                // Re-focus on employee field for continuous walk-through
-                const empInput = document.getElementById('inputEmployee');
-                empInput.focus();
-            } else {
-                closeFormModal();
-            }
-        }
-
-        function editRecord(id) {
-            const record = records.find(r => r.id === id);
-            if (record) {
-                openFormModal(record);
-            }
-        }
-
-        function deleteRecord(id) {
-            const record = records.find(r => r.id === id);
-            if (!record) return;
-
-            if (confirm(`Удалить запись для сотрудника "${record.employee}" (Кабинет ${record.room})?`)) {
-                records = records.filter(r => r.id !== id);
-                saveToStorage();
-                renderApp();
-                showToast("Запись удалена");
-            }
-        }
-
-        function openBackupModal() {
-            document.getElementById('backupModal').classList.remove('hidden');
-        }
-
-        function closeBackupModal() {
-            document.getElementById('backupModal').classList.add('hidden');
-        }
-
-        // Export CSV with UTF-8 BOM (\uFEFF) for Microsoft Excel compatibility
-        function exportToCSV() {
-            if (records.length === 0) {
-                showToast("Нет данных для экспорта", "error");
-                return;
-            }
-
-            let csvContent = "\uFEFF"; // UTF-8 BOM
-            csvContent += "Этаж;Кабинет;Сотрудник;Тип техники;Инвентарный номер\n";
-
-            records.forEach(r => {
-                r.equipment.forEach(eq => {
-                    const row = [
-                        cleanForCSV(r.floor),
-                        cleanForCSV(r.room),
-                        cleanForCSV(r.employee),
-                        cleanForCSV(eq.type),
-                        cleanForCSV(eq.code)
-                    ].join(";");
-                    csvContent += row + "\n";
-                });
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            const dateStr = new Date().toISOString().slice(0,10);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `Inventory_Office_${dateStr}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast("Файл CSV скачан!");
-        }
-
-        function cleanForCSV(text) {
-            if (text === null || text === undefined) return '""';
-            let str = String(text).replace(/"/g, '""');
-            if (str.includes(';') || str.includes('\n') || str.includes('"')) {
-                str = `"${str}"`;
-            }
-            return str;
-        }
-
-        // Export JSON Backup
-        function exportToJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(records, null, 2));
-            const downloadAnchor = document.createElement('a');
-            const dateStr = new Date().toISOString().slice(0,10);
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `backup_inventory_${dateStr}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            showToast("Резервная копия сохранена!");
-        }
-
-        // Import JSON Backup
-        function importFromJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) {
-                        records = imported;
-                        saveToStorage();
-                        renderApp();
-                        closeBackupModal();
-                        showToast(`Импортировано ${records.length} записей!`);
-                    } else {
-                        showToast("Неверный формат JSON файла", "error");
-                    }
-                } catch (err) {
-                    showToast("Ошибка при чтении файла", "error");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function confirmResetData() {
-            if (confirm("Вы уверены, что хотите сбросить все внесенные данные к первоначальным демо-записям?")) {
-                records = [...DEMO_RECORDS];
-                saveToStorage();
-                renderApp();
-                closeBackupModal();
-                showToast("Данные сброшены");
-            }
-        }
-
-        function showToast(message, type = "success") {
-            const toast = document.getElementById('toast');
-            const msgEl = document.getElementById('toastMessage');
-            const iconEl = document.getElementById('toastIcon');
-
-            msgEl.textContent = message;
-
-            if (type === "error") {
-                iconEl.setAttribute("class", "w-5 h-5 text-red-400");
-                iconEl.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>`;
-            } else {
-                iconEl.setAttribute("class", "w-5 h-5 text-emerald-400");
-                iconEl.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>`;
-            }
-
-            toast.classList.remove('opacity-0', 'translate-y-4');
-            toast.classList.add('opacity-100', 'translate-y-0');
-
-            setTimeout(() => {
-                toast.classList.remove('opacity-100', 'translate-y-0');
-                toast.classList.add('opacity-0', 'translate-y-4');
-            }, 2500);
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        function highlightMatch(text, query) {
-            if (!query) return text;
-            const index = text.toLowerCase().indexOf(query.toLowerCase());
-            if (index === -1) return text;
-            const match = text.substring(index, index + query.length);
-            return text.substring(0, index) + `<mark class="bg-amber-200 text-slate-900 rounded-sm px-0.5">${match}</mark>` + text.substring(index + query.length);
-        }
-    </script>
+      };
+      reader.readAsText(file);
+    }
+
+    // SYNC MODAL
+    function openSyncModal() {
+      document.getElementById('room-code-input').value = roomCode;
+      document.getElementById('sync-modal').classList.remove('hidden');
+    }
+
+    function closeSyncModal() {
+      document.getElementById('sync-modal').classList.add('hidden');
+    }
+
+    function applyRoomCode() {
+      const val = document.getElementById('room-code-input').value.trim().toLowerCase();
+      if (val) {
+        roomCode = val;
+        localStorage.setItem('inventory_room_code', roomCode);
+        closeSyncModal();
+        if (dbRef) dbRef.off();
+        initFirebaseSync();
+      }
+    }
+  </script>
 </body>
 </html>
